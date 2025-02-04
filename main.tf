@@ -1,39 +1,24 @@
+locals {
+ name_prefix = "choonyee"
+}
 
-resource "local_file" "terraform_apply_yaml" {
-  filename = "./github/workflows/terraform-apply.yaml"
-  content  = <<-EOT
- name: Terraform Deployment
+# S3 bucket
+resource "aws_s3_bucket" "static_bucket" {
+ bucket = "choonyees3.sctp-sandbox.com"
+ force_destroy = true
+}
 
-on:
-  push:
-    branches: [ "main" ]
+## EC2 Instance
+resource "aws_instance" "dynamodb_reader" {
+  ami                    = "ami-04c913012f8977029"
+  instance_type          = "t2.micro"
+  subnet_id              = data.aws_subnets.public.ids[0]
+  vpc_security_group_ids = [aws_security_group.dynamodb_reader.id]
+  associate_public_ip_address = true
 
-env:            
-  AWS_REGION: ap-southeast-1  
+  iam_instance_profile = aws_iam_instance_profile.profile_dynamodb.id
 
-jobs:
-  CICD:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-   
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
-
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v2
-   
-    - name: Terraform Init
-      run: terraform init
-
-    - name: Terraform Plan
-      run: terraform plan
-   
-    - name: Terraform Apply
-      run: terraform apply --auto-approve
+  tags = {
+    Name = "${local.name_prefix}-dynamodb-reader"
+  }
+}
