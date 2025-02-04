@@ -1,7 +1,8 @@
+
 resource "local_file" "terraform_apply_yaml" {
   filename = "./github/workflows/terraform-apply.yaml"
   content  = <<-EOT
-  name: Terraform Deployment
+ name: Terraform Deployment
 
 on:
   push:
